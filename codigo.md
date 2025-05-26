@@ -1,47 +1,101 @@
 ```cpp
 /*
- * Método: manejarComandoMQTT
- * Descripción: Función de retorno (callback) que se ejecuta al recibir un mensaje MQTT.
- *              Procesa el mensaje recibido, aplica filtros para garantizar su integridad,
- *              y ejecuta acciones en el ESP32 según el comando recibido (ON/OFF).
+ * ---------------------------------------------------------------------------
+ * Método: controlEmergenciaMQTT
  * 
- * @param topic   Tópico MQTT donde se recibió el mensaje.
- * @param payload Contenido del mensaje (bytes crudos).
- * @param length  Longitud del payload en bytes.
+ * Dependencias obligatorias:
+ *   #include <PubSubClient.h>  // Librería MQTT (instalar via Arduino Library Manager)
+ *   #include <WiFi.h>          // Librería WiFi para ESP32
+ *   #include "ControlVentilador.h" //clase personalizada del ventilador
+ * 
+ * Variables globales requeridas en el programa principal:
+ *   WiFiClient espClient;            // Cliente WiFi
+ *   PubSubClient client(espClient);  // Cliente MQTT
+ *   ControlVentilador ventilador;    // Instancia de tu clase de control
+ * 
+ * Configuración previa requerida:
+ *   1. Tener conexión WiFi establecida (conectar a red en setup())
+ *   2. Broker MQTT configurado (ej: client.setServer(broker, puerto))
+ *   3. Ventilador inicializado (ej: ventilador.inicializar())
+ * ---------------------------------------------------------------------------
  */
-void manejarComandoMQTT(char* topic, byte* payload, unsigned int length) {
-  // -------------------------------
-  // Procesamiento del mensaje
-  // -------------------------------
-  
-  // 1. Convertir el payload a String y filtrar caracteres no imprimibles
-  String message = "";
+
+// Función de callback para manejar comandos MQTT
+void controlEmergenciaMQTT(char* topic, byte* payload, unsigned int length) {
+
+  /* ----------------------------------------------
+   * 1. FILTRADO POR TÓPICO MQTT
+   * ----------------------------------------------
+   * Solo procesa mensajes del tópico especificado
+   */
+  String strTopic = String(topic);
+  if (strTopic != "wokwi/ventilador_control") {//NOTA: usar el topico que pongamos en el código final para controlar los ventiladores
+    return;  // Ignorar otros tópicos
+  }
+
+  /* ----------------------------------------------
+   * 2. PROCESAMIENTO DEL PAYLOAD
+   * ----------------------------------------------
+   * Construye un String seguro con el mensaje:
+   * - Filtra caracteres no imprimibles (seguridad básica)
+   * - Elimina espacios innecesarios
+   */
+  String mensaje = "";
   for (int i = 0; i < length; i++) {
-    if (isPrintable(payload[i])) {  // Descarta caracteres especiales/control (ej: NULL, \n)
-      message += (char)payload[i];   // Construye el mensaje carácter por carácter
+    if (isPrintable(payload[i])) {  // ASCII 32-126
+      mensaje += (char)payload[i];
     }
   }
-  
-  // 2. Limpieza del mensaje: elimina espacios/tabuladores al inicio y final
-  message.trim();  
+  mensaje.trim(); //Limpieza del mensaje: elimina espacios/tabuladores al inicio y final
 
-  // -------------------------------
-  // Lógica de control del ventilador
-  // -------------------------------
-  
-  if (message == "OFF") {
-    // Comando OFF: Desactiva el ventilador
-    digitalWrite(motorVentilador, LOW);  // LOW = Apagar (asume configuración activa en HIGH)
-    Serial.println("Ventilador APAGADO");
+  /* ----------------------------------------------
+   * 3. LÓGICA DE CONTROL DEL VENTILADOR
+   * ----------------------------------------------
+   * Acciones compatibles con la clase ControlVentilador:
+   * - encender(velocidad)
+   * - paradaEmergencia()
+   * - estaEncendido()
+   */
+  if (mensaje == "OFF") {
+    if (ventilador.estaEncendido()) {
+      ventilador.paradaEmergencia();
+      
+    }
     
-  } else if (message == "ON") {
-    // Comando ON: Activa el ventilador
-    digitalWrite(motorVentilador, HIGH); // HIGH = Encender 
-    Serial.println("Ventilador ENCENDIDO");
+  } else if (mensaje == "ON") {
+    if (!ventilador.estaEncendido()) {
+      ventilador.encender(100);  // Encender al 100% de velocidad
+      
+    }
     
-  }
-  
-  // Nota: 'motorVentilador' debe ser un pin GPIO configurado como salida en setup()
-  // y corresponder al pin físico donde está conectado el ventilador/relé.
+  } 
 }
-```
+
+/* ---------------------------------------------------------------------------
+ * Notas de uso en el programa principal:
+ * 
+ * 1. En el setup():
+ *    - Inicializar WiFi y MQTT:
+ *      
+ *      void setup() {
+ *        Serial.begin(115200);
+ *        setup_wifi();  // Tu función de conexión WiFi
+ *        client.setServer(MQTT_BROKER, MQTT_PORT);  // Configurar broker
+ *        client.setCallback(controlEmergenciaMQTT);  // ¡Asignar este callback!
+ *        ventilador.inicializar();  // Inicializar hardware del ventilador
+ *      }
+ * 
+ * 2. En el loop():
+ *    - Mantener conexión MQTT activa:
+ *      
+ *      void loop() {
+ *        if (!client.connected()) reconnect();
+ *        client.loop();
+ *        // ... otras tareas
+ *      }
+ * 
+ * 3. Requiere implementar:
+ *    - void setup_wifi() -> Conexión a tu red WiFi
+ *    - void reconnect()  -> Reconexión MQTT
+ * ---------------------------------------------------------------------------
+ */
