@@ -2,7 +2,8 @@
 
 La aplicación Android permite el **control manual del ventilador** en situaciones de emergencia, especialmente en entornos con **altas concentraciones de gas**. Al encenderse, el ventilador **aumenta el flujo de aire** y ayuda a reducir la concentración de gas, mitigando posibles riesgos.
 
-![Aplicación](asset/img1.png)
+<img src="asset/img1.png" alt="Aplicación" width="300" height="600">
+
 ---
 
 ## Comunicación entre ESP32 y la Aplicación
@@ -49,7 +50,7 @@ La aplicación, suscrita al tópico, **muestra los datos en un gráfico en tiemp
 
 ### Gráfico de Concentración de Gas
 
-<img src="asset/img2.png" alt="Gráfico de PPM en tiempo real" width="600" height="400">
+<img src="asset/img2.png" alt="Gráfico de PPM en tiempo real" width="300" height="200">
 
 - Muestra el historial de valores en PPM (por ejemplo, de 1.500 a 4.000).
 - **Eje X**: marcas de tiempo (horas).
