@@ -49,7 +49,7 @@ La aplicación, suscrita al tópico, **muestra los datos en un gráfico en tiemp
 
 ### Gráfico de Concentración de Gas
 
-<img src="assets/img2.png" alt="Gráfico de PPM en tiempo real" width="600" height="400">
+<img src="asset/img2.png" alt="Gráfico de PPM en tiempo real" width="600" height="400">
 
 - Muestra el historial de valores en PPM (por ejemplo, de 1.500 a 4.000).
 - **Eje X**: marcas de tiempo (horas).
@@ -57,7 +57,7 @@ La aplicación, suscrita al tópico, **muestra los datos en un gráfico en tiemp
 
 ### Panel de Control Manual
 
-<img src="assets/img3.png" alt="Botones" width="300" height="200">
+<img src="asset/img3.png" alt="Botones" width="300" height="200">
 
 - Botones grandes:
   - **ENCENDER** (rojo)
